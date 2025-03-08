@@ -7,6 +7,17 @@ from tkinter import ttk
 from tkinterdnd2 import TkinterDnD, DND_FILES
 
 
+# requirements for application:
+#   - download ghostscript
+
+
+# tickets:
+#   Settings-Window:
+#   - window that allows selecting printer ++++++
+#   - 
+
+
+
 def print_files(files_list, progress_bar, label):
     
     # requirements
@@ -91,34 +102,38 @@ def print_folder(folder_path, progress_bar, label):
 
 def create_gui():
 
-    # Hauptfenster erstellen
+    # create main-window
     root = TkinterDnD.Tk()
-    root.title("PDF Drucker")
-
-    # Fenstergröße festlegen
+    root.title("Drucken von PDF in Eingabeform von Dateien oder Ordner")
     root.geometry("800x400")
+    root.grid_rowconfigure(0, weight=5)
+    root.grid_rowconfigure(1, weight=0)
+    root.grid_columnconfigure(0, weight=1)
+    root.grid_columnconfigure(1, weight=1)
 
-    #files_frame.pack()
-    bar_frame = tk.Frame(root, width=400, height=100, bd=2, relief="solid")
-    bar_frame.pack(side='bottom', fill='x')
+    # create sub-windows: file, folder, bar
+    folder_frame = tk.Frame(root, width=400, height=300, bd=2, relief='groove')
+    folder_frame.grid(row=0, column=0, padx=5, pady=5, sticky='nsew')
 
-    folder_frame = tk.Frame(root, width=400, height=300, bd=2, relief='solid')
-    folder_frame.pack(side="left", fill='both')
+    files_frame = tk.Frame(root, width=400, height=300, bd=2, relief='groove')
+    files_frame.grid(row=0, column=1, padx=5, pady=5, sticky='nsew')
 
-    files_frame = tk.Frame(root, width=400, height=300, bd=2, relief="solid")
-    files_frame.pack(side="right", fill='both')
+    bar_frame = tk.Frame(root, width=400, height=100, bd=2, relief='groove')
+    bar_frame.grid(row=1, columnspan=2, padx=5, pady=5, sticky='nsew')
 
 
-    # Text für das UI
+    # labels for windows
     label_folder = tk.Label(folder_frame, text="Ziehen Sie einen Ordner hierher, um die PDFs zu drucken.", padx=10, pady=10)
-    label_folder.pack(padx=20, pady=20)
+    label_folder.pack(fill='both', expand=True, padx=20, pady=20)
 
     label_files = tk.Label(files_frame, text="Ziehen Sie versch. Dateien hierher, um die PDFs zu drucken.", padx=10, pady=10)
-    label_files.pack(padx=20, pady=20)
+    label_files.pack(fill='both', expand=True, padx=20, pady=20)
 
     # Fortschrittsbalken erstellen
     progress_bar = ttk.Progressbar(bar_frame, orient="horizontal", length=400, mode="determinate")
     progress_bar.pack(pady=20)
+
+
 
     # drag and drop of folder
     def on_left_drop(event):
@@ -134,6 +149,7 @@ def create_gui():
         label_folder.config(text="Druckvorgang läuft...")
         # Dateien drucken
         print_folder(ordnerpfad,  progress_bar, label_folder)
+
 
     # drag and drop of files
     def on_right_drop(event):

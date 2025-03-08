@@ -1,0 +1,5 @@
+Funktionen der Skripte:
+
+printer_manager --> PrinterManager:
+    - verwaltet Druckerliste und Auswahl des aktiven Druckers
+    
