@@ -19,9 +19,9 @@ class PDFPrinterApp:
 
         # create menubar
         self.create_menubar()
-
         # create widgets
         self.create_widgets()
+
 
     # create menubar
     def create_menubar(self):
@@ -45,7 +45,6 @@ class PDFPrinterApp:
         # adding submenu
         settings_menu.add_cascade(label='Drucker Auswählen:', menu=printer_menu)
 
-
         # adding submenus to menubar
         menubar.add_cascade(label='File', menu=file_menu, underline=0)
         menubar.add_cascade(label='Settings', menu=settings_menu, underline=0)
@@ -53,7 +52,7 @@ class PDFPrinterApp:
 
 
     # drag and drop of folder
-    def on_left_drop(self, event):
+    def on_folder_drop(self, event):
         ordnerpfad = event.data.strip('{}')  # Der Ordnerpfad, der vom Benutzer gezogen wurde
         # check data_format
         if not os.path.isdir(ordnerpfad):
@@ -65,11 +64,11 @@ class PDFPrinterApp:
         self.progress_bar['value'] = 0
         self.label_folder.config(text="Druckvorgang läuft...")
         # Dateien drucken
-        self.pdf_processor.print_folder(ordnerpfad,  self.progress_bar, self.label_folder)
+        self.pdf_processor.print_folder(ordnerpfad)
 
 
     # drag and drop of files
-    def on_right_drop(self, event):
+    def on_files_drop(self, event):
             files_list = event.data.split('} {')  # Der Pfad der Datei, die auf das rechte Drop-Ziel gezogen wurde
             
             for i in range(len(files_list)):
@@ -83,7 +82,7 @@ class PDFPrinterApp:
             # Fortschrittsbalken auf 0 setzen und die Datei drucken
             self.progress_bar['value'] = 0
             self.label_files.config(text="Druckvorgang läuft...")
-            self.pdf_processor.print_files(files_list, self.progress_bar, self.label_files)
+            self.pdf_processor.print_files(files_list)
 
 
     def create_widgets(self):
@@ -110,10 +109,10 @@ class PDFPrinterApp:
 
         # Drag & Drop auf das Fenster ermöglichen
         self.folder_frame.drop_target_register(DND_FILES)
-        self.folder_frame.dnd_bind('<<Drop>>', self.on_left_drop)
+        self.folder_frame.dnd_bind('<<Drop>>', self.on_folder_drop)
 
         self.files_frame.drop_target_register(DND_FILES)
-        self.files_frame.dnd_bind('<<Drop>>', self.on_right_drop)
+        self.files_frame.dnd_bind('<<Drop>>', self.on_files_drop)
 
 
     def run(self):

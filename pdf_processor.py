@@ -22,7 +22,7 @@ class PDFProcessor(PDFPrinterApp):
         self.ghostscript_path = r"C:\Program Files\gs\gs10.04.0\bin\gswin64c.exe"
 
 
-    def print_files(self, files_list, progress_bar, label):
+    def print_files(self, files_list):
 
         cnt_files = len(files_list)
 
@@ -42,22 +42,22 @@ class PDFProcessor(PDFPrinterApp):
                                 orig_dateipfad], shell=True)
                 
                 # Fortschrittsbalken aktualisieren
-                progress_bar['value'] = (index + 1 / cnt_files) * 100
-                label.config(text=f"{index + 1}/{cnt_files} Dateien verarbeitet...")
-                label.update_idletasks()  # UI aktualisieren
+                self.progress_bar['value'] = (index + 1 / cnt_files) * 100
+                self.label_files.config(text=f"{index + 1}/{cnt_files} Dateien verarbeitet...")
+                self.label_files.update_idletasks()  # UI aktualisieren
 
                 time.sleep(0.5)
             else:
                 print(f"Datei: {orig_dateipfad} nicht gefunden oder keine PDF...")
 
         # Nachdem alle Dateien verarbeitet sind, Fortschritt auf 100% setzen
-        progress_bar['value'] = 100
-        label.config(text=f"Alle {cnt_files} Dateien wurden gedruckt!")
+        self.progress_bar['value'] = 100
+        self.label_files.config(text=f"Alle {cnt_files} Dateien wurden gedruckt!")
 
 
 
 
-    def print_folder(self, folder_path, progress_bar, label):
+    def print_folder(self, folder_path):
         
         files = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
         cnt_files = len(files)
@@ -78,14 +78,14 @@ class PDFProcessor(PDFPrinterApp):
                                 orig_dateipfad], shell=True)
                 
                 # Fortschrittsbalken aktualisieren
-                progress_bar['value'] = (index / cnt_files) * 100
-                label.config(text=f"{index}/{cnt_files} Dateien verarbeitet...")
-                label.update_idletasks()  # UI aktualisieren
+                self.progress_bar['value'] = (index / cnt_files) * 100
+                self.label_folder.config(text=f"{index}/{cnt_files} Dateien verarbeitet...")
+                self.label_folder.update_idletasks()  # UI aktualisieren
 
                 time.sleep(0.5)
             else:
                 print(f"Datei: {orig_dateipfad} nicht gefunden oder keine PDF...")
 
         # Nachdem alle Dateien verarbeitet sind, Fortschritt auf 100% setzen
-        progress_bar['value'] = 100
-        label.config(text=f"Alle {cnt_files} Dateien wurden gedruckt!")
+        self.progress_bar['value'] = 100
+        self.label_folder.config(text=f"Alle {cnt_files} Dateien wurden gedruckt!")
