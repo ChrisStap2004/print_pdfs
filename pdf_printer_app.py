@@ -4,9 +4,8 @@ from tkinter import ttk
 from tkinterdnd2 import TkinterDnD, DND_FILES
 
 class PDFPrinterApp:
-    def __init__(self, printer_manager, pdf_processor):
+    def __init__(self, printer_manager):
         self.printer_manager = printer_manager
-        self.pdf_processor = pdf_processor
 
         # initialize main-window
         self.root = TkinterDnD.Tk()

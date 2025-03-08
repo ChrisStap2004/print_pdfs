@@ -6,7 +6,7 @@ import tkinter as tk
 from tkinter import ttk
 from tkinterdnd2 import TkinterDnD, DND_FILES
 
-# subclasses
+# be a subclass of PDFPrinterApp
 from pdf_printer_app import PDFPrinterApp
 
 
