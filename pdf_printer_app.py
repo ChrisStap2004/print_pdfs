@@ -3,14 +3,17 @@ import tkinter as tk
 from tkinter import ttk
 from tkinterdnd2 import TkinterDnD, DND_FILES
 
+from input_information import InputInformation
+
 class PDFPrinterApp:
-    def __init__(self, printer_manager):
+    def __init__(self, printer_manager, pdf_processor):
         self.printer_manager = printer_manager
+        self.pdf_processor = pdf_processor
 
         # initialize main-window
         self.root = TkinterDnD.Tk()
-        self.root.title("Drucken von PDF in Eingabeform von Dateien oder Ordner")
-        self.root.geometry("800x400")
+        self.root.title(InputInformation.get_root_title)
+        self.root.geometry(InputInformation.get_root_geometrie)
         self.root.grid_rowconfigure(0, weight=5)
         self.root.grid_rowconfigure(1, weight=0)
         self.root.grid_columnconfigure(0, weight=1)
@@ -49,6 +52,38 @@ class PDFPrinterApp:
         menubar.add_cascade(label='Settings', menu=settings_menu, underline=0)
 
 
+    # create the print-overwiev window
+    def creater_print_overview(self):
+        self.overview_window = tk.Toplevel(self.root)
+        self.overview_window.title("Dateiübersicht")
+
+        if not self.pdf_processor.get_filepaths_to_be_printed():
+            print(f'Keine Dateien zum Drucken hinzugefügt.')
+            return
+        
+        # display every filename and let user choose how many copies he wants
+        for idx, file in enumerate(self.pdf_processor.get_filepaths_to_be_printed()):
+            frame = tk.Frame(self.overview_window)
+            frame.pack(pady=5, padx=5)
+            # filename
+            filename_label = tk.Label(frame, text=os.path.basename(file["filename"]))
+            filename_label.pack(side=tk.Left)
+            # cnt of copies
+            copies_label = tk.Label(frame, text="Kopien:")
+            copies_label.pack(side=tk.LEFT)
+            copies_entry = tk.Entry(frame)
+            copies_entry.insert(0, file["copies"])
+            copies_entry.pack(side=tk.LEFT)
+            # checkbox for oppurtunity of printing
+            print_var = tk.BooleanVar(True)
+            print_checkbox = tk.Checkbutton(frame, text="Drucken", variable=print_var)
+            print_checkbox.pack(side=tk.LEFT)
+            # safe references
+            file["copies_entry"] = copies_entry
+            file["print_val"] = print_var
+
+        print_button = tk.Button(self.overview_window, text='Drucken', command=self.pdf_processor.print_input)
+        print_button.pack(pady=10)
 
     # drag and drop of folder
     def on_folder_drop(self, event):
@@ -61,9 +96,9 @@ class PDFPrinterApp:
         print(f"Ordner ausgewählt: {ordnerpfad}")
         # Fortschrittsbalken auf 0 setzen
         self.progress_bar['value'] = 0
-        self.label_folder.config(text="Druckvorgang läuft...")
+        self.label_folder.config(text=InputInformation.get_printing())
         # Dateien drucken
-        self.pdf_processor.print_folder(ordnerpfad)
+        self.pdf_processor.plan_to_print_folder(ordnerpfad, self.progress_bar, self.label_folder)
 
 
     # drag and drop of files
@@ -80,8 +115,8 @@ class PDFPrinterApp:
             print(f"Dateien ausgewählt: {files_list}")
             # Fortschrittsbalken auf 0 setzen und die Datei drucken
             self.progress_bar['value'] = 0
-            self.label_files.config(text="Druckvorgang läuft...")
-            self.pdf_processor.print_files(files_list)
+            self.label_files.config(text=InputInformation.get_printing())
+            self.pdf_processor.plan_to_print_files(files_list, self.progress_bar, self.label_files)
 
 
     def create_widgets(self):
@@ -94,17 +129,22 @@ class PDFPrinterApp:
 
         self.bar_frame = tk.Frame(self.root, width=400, height=100, bd=2, relief='groove')
         self.bar_frame.grid(row=1, columnspan=2, padx=5, pady=5, sticky='nsew')
+        self.bar_frame.grid_columnconfigure(0, weight=20)
+        self.bar_frame.grid_columnconfigure(0, weight=1)
 
         # labels for windows
-        self.label_folder = tk.Label(self.folder_frame, text="Ziehen Sie einen Ordner hierher, um die PDFs zu drucken.", padx=10, pady=10)
+        self.label_folder = tk.Label(self.folder_frame, text=InputInformation.get_folder_drop_init(), padx=10, pady=10)
         self.label_folder.pack(fill='both', expand=True, padx=20, pady=20)
 
-        self.label_files = tk.Label(self.files_frame, text="Ziehen Sie versch. Dateien hierher, um die PDFs zu drucken.", padx=10, pady=10)
+        self.label_files = tk.Label(self.files_frame, text=InputInformation.get_files_drop_init(), padx=10, pady=10)
         self.label_files.pack(fill='both', expand=True, padx=20, pady=20)
 
         # create process-bar
         self.progress_bar = ttk.Progressbar(self.bar_frame, orient="horizontal", length=400, mode="determinate")
-        self.progress_bar.pack(pady=20)
+        self.progress_bar.pack(side='left', expand=True, pady=20, padx=10)
+        # create print-button
+        self.print_button = ttk.Button(self.bar_frame, text='Drucken',command=self.pdf_processor.print_input)
+        self.print_button.pack(side='right', pady=10, padx=10)
 
         # Drag & Drop auf das Fenster ermöglichen
         self.folder_frame.drop_target_register(DND_FILES)
