@@ -46,26 +46,32 @@ class PDFPrinterApp:
         # create submenu
         printer_menu = tk.Menu(settings_menu, tearoff=0)
         for printer in self.printer_manager.printers:
-            printer_menu.add_command(label=printer, command= lambda p=printer: self.printer_manager.set_printer(p))
+            printer_menu.add_command(label=printer, command= lambda p=printer: self.printer_manager.set_printer(p, self.status_text))
         # adding submenu
         settings_menu.add_cascade(label='Drucker Auswählen:', menu=printer_menu)
         # creating printing queue
-        settings_menu.add_cascade(label="Druckerwarteschlange", command=self.printer_manager.open_printing_queue)
+        settings_menu.add_cascade(label="Druckerwarteschlange", command= lambda: self.printer_manager.open_printing_queue(self.status_text))
 
         # adding submenus to menubar
         menubar.add_cascade(label='File', menu=file_menu, underline=0)
         menubar.add_cascade(label='Settings', menu=settings_menu, underline=0)
 
+
     def open_folder(self):
-        self.folder_selected = filedialog.askdirectory(title='Wählen Sie einen zu druckenden Ordner aus indem die PDF-Dateien enthalten sind')
+        self.folder_selected = filedialog.askdirectory(
+            title='Wählen Sie einen zu druckenden Ordner aus indem die PDF-Dateien enthalten sind'
+            )
         if self.folder_selected:
-            print(f"Chosen folder: {self.folder_selected}")
+            self.status_text.set(f"chosen folder: {self.folder_selected}")
+            print(f"chosen folder: {self.folder_selected}")
+            
             self.progress_bar['value'] = 0
             self.label_folder_text.set(InputInformation.get_printing())
-            self.pdf_processor.plan_to_print_folder(self.folder_selected, self.progress_bar, self.label_folder)
+            self.pdf_processor.plan_to_print_folder(self.folder_selected, self.progress_bar, self.label_folder, self.status_text)
 
             if len(self.pdf_processor.get_filepaths_to_be_printed()) > 0:
                     self.create_print_overview()
+
 
     def open_files(self):
         self.files_selected =filedialog.askopenfilenames(
@@ -73,14 +79,17 @@ class PDFPrinterApp:
             title='Wählen Sie die zu druckenden PDF-Dateien aus')
         if self.files_selected:
             self.files_selected = list(self.files_selected)
-            print(f"Chosen files: {self.files_selected}")
+
+            self.status_text.set(f"chosen files: {self.files_selected}")
+            print(f"chosen files: {self.files_selected}")
             
             self.progress_bar['value'] = 0
             self.label_files_text.set(InputInformation.get_printing())
-            self.pdf_processor.plan_to_print_files(self.files_selected, self.progress_bar, self.label_files)
+            self.pdf_processor.plan_to_print_files(self.files_selected, self.progress_bar, self.label_files, self.status_text)
 
             if len(self.pdf_processor.get_filepaths_to_be_printed()) > 0:
                 self.create_print_overview()
+
 
     def on_close(self, key):
         if key == 'overview_window':
@@ -89,6 +98,7 @@ class PDFPrinterApp:
             self.label_folder_text.set(InputInformation.get_folder_drop_init())
             self.label_files_text.set(InputInformation.get_files_drop_init())
             self.root.focus
+            self.status_text.set(InputInformation.get_status_text('print_canceled'))
         elif key == 'root':
             self.printer_manager.close_printing_queue()
             self.root.destroy()
@@ -96,7 +106,8 @@ class PDFPrinterApp:
 
     def on_print_button_click(self):
         self.overview_window.destroy()
-        self.pdf_processor.print_input()
+        self.pdf_processor.print_input(self.status_text)
+
 
     # create the print-overwiev window
     def create_print_overview(self):
@@ -110,6 +121,8 @@ class PDFPrinterApp:
         self.overview_window.geometry(f"+{self.root.winfo_x()}+{self.root.winfo_y()}")
 
         if not self.pdf_processor.get_filepaths_to_be_printed():
+            messagebox.INFO(InputInformation.get_error_msg('no_files_to_print'))
+            self.status_text.set(InputInformation.get_error_msg('no_files_to_print'))
             print(f'Keine Dateien zum Drucken hinzugefügt.')
             return
         else:
@@ -148,17 +161,21 @@ class PDFPrinterApp:
         ordnerpfad = event.data.strip('{}')  # Der Ordnerpfad, der vom Benutzer gezogen wurde
         # check data_format
         if not os.path.isdir(ordnerpfad):
+            messagebox.INFO(InputInformation.get_error_msg('no_folder_dropped'))
+            self.status_text.set(InputInformation.get_error_msg('no_folder_dropped'))
             print("Sie haben keinen Ordner abgelegt. Bitte wiederholen")
             return
         
-        print(f"Ordner ausgewählt: {ordnerpfad}")
+        #print(f"Ordner ausgewählt: {ordnerpfad}")
+        self.status_text.set(f"chosen folder: {ordnerpfad}")
         # Fortschrittsbalken auf 0 setzen
         self.progress_bar['value'] = 0
         self.label_folder_text.set(InputInformation.get_printing())
-        self.pdf_processor.plan_to_print_folder(ordnerpfad, self.progress_bar, self.label_folder)
+        self.pdf_processor.plan_to_print_folder(ordnerpfad, self.progress_bar, self.label_folder, self.status_text)
 
         if len(self.pdf_processor.get_filepaths_to_be_printed()) > 0:
                 self.create_print_overview()
+
 
     # drag and drop of files
     def on_files_drop(self, event):
@@ -171,15 +188,15 @@ class PDFPrinterApp:
                     print("Erwarteter Datentyp .pdf nicht bei allen Dateien vorhanden. Wiederholen Sie den Vorgang")
                     return
                 
-            print(f"Chosen files: {files_list}")
+            #print(f"Chosen files: {files_list}")
+            self.status_text.set(f"chosen files: {files_list}")
             # Fortschrittsbalken auf 0 setzen und die Datei drucken
             self.progress_bar['value'] = 0
             self.label_files_text.set(InputInformation.get_printing())
-            self.pdf_processor.plan_to_print_files(files_list, self.progress_bar, self.label_files)
+            self.pdf_processor.plan_to_print_files(files_list, self.progress_bar, self.label_files, self.status_text)
             
             if len(self.pdf_processor.get_filepaths_to_be_printed()) > 0:
                 self.create_print_overview()
-
 
 
     def create_widgets(self):
@@ -217,6 +234,10 @@ class PDFPrinterApp:
 
         self.files_frame.drop_target_register(DND_FILES)
         self.files_frame.dnd_bind('<<Drop>>', self.on_files_drop)
+
+        self.status_text = tk.StringVar(value=InputInformation.get_status_text('init'))
+        self.status_label = tk.Label(self.root, textvariable=self.status_text, bd=1, anchor='w')
+        self.status_label.grid(row=2, columnspan=2, padx=5, pady=0, sticky="w")
 
 
     def run(self):

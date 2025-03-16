@@ -8,6 +8,23 @@ class InputInformation:
 
     OVERVIEW_GEOMETRIE = "800x400"
 
+    # status-row-text
+    STATUS = {
+        'init': "Bereit",
+        'print_canceled': "Druckvorgang abgebrochen. Bereit für neue Eingabe.",
+        'process_canceled': "Vorgang abgebrochen. Bereit für neue Eingabe.",
+        'read_files_successful': "Dateien erfolgreich eingelesen.",
+        'all_files_printed': "Alle Dateien wurden erfolgreich gedruckt."
+    }
+
+    # error-messages
+    ERROR = {
+        'no_folder_dropped': "Kein Ordner wurde abgelegt. Wiederholen Sie den Vorgang.",
+        'no_files_to_print': "Keine Dateien wurden zum Drucken hinzugefügt.",
+        'no_pdf_file_in_files': "Mindestens eine Datei ist keine pdf. Bitte wiederholen Sie die Eingabe.",
+        'none_existing_path': "Mindestens ein Pfad zu einer Datei existiert nicht. Bitte wiederholen Sie die Eingabe.",
+        'folder_consist_of_not_only_files': "Mindestens eine Datei des Ordners ist nicht vom Typ Datei. Bitte Wiederholen Sie die Eingabe."
+    }   
 
     @staticmethod
     def get_folder_drop_init():
@@ -32,3 +49,11 @@ class InputInformation:
     @staticmethod
     def get_overview_geometrie():
         return InputInformation.OVERVIEW_GEOMETRIE
+    
+    @staticmethod
+    def get_status_text(key):
+        return InputInformation.STATUS[key]
+    
+    @staticmethod
+    def get_error_msg(key):
+        return InputInformation.ERROR[key]
