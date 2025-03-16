@@ -6,6 +6,8 @@ class InputInformation:
     ROOT_TITLE = "Drucken von PDF in Eingabeform von Dateien oder Ordner"
     ROOT_GEOMETRIE = "800x400"
 
+    OVERVIEW_GEOMETRIE = "800x400"
+
 
     @staticmethod
     def get_folder_drop_init():
@@ -26,3 +28,7 @@ class InputInformation:
     @staticmethod
     def get_root_geometrie():
         return InputInformation.ROOT_GEOMETRIE
+    
+    @staticmethod
+    def get_overview_geometrie():
+        return InputInformation.OVERVIEW_GEOMETRIE

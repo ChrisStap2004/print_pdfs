@@ -6,12 +6,14 @@ import tkinter as tk
 from tkinter import ttk
 from tkinterdnd2 import TkinterDnD, DND_FILES
 
+from input_information import InputInformation
+
 
 
 class PDFProcessor():
     def __init__(self, printer_manager):
         self.printer_manager = printer_manager
-        self.filepahts_to_be_printed = []
+        self.filepaths_to_be_printed = []
 
         # initialize scripts
         self.acrobat_path = r"C:\Program Files\Adobe\Acrobat DC\Acrobat\Acrobat.exe" 
@@ -20,92 +22,83 @@ class PDFProcessor():
 
 
     def get_filepaths_to_be_printed(self):
-        return self.filepahts_to_be_printed
+        return self.filepaths_to_be_printed
+    
+    def set_filepaths_to_be_printed(self, filepaths_to_be_printed):
+        self.filepaths_to_be_printed = filepaths_to_be_printed
 
     # extract files from folder and put it into 'files list
     def plan_to_print_files(self, files_list, progress_bar, label_files):
         self.progress_bar = progress_bar
         self.label_files = label_files
-        cnt_files = len(files_list)
 
-        for index, file_path in enumerate(files_list, 0):
-            orig_dateipfad = file_path
+        for filepath in files_list:
+    
+            if os.path.exists(filepath) and filepath.lower().endswith(".pdf"):
+                self.filepaths_to_be_printed.append({"filepath": filepath, "copies": 1, "print": False})
 
-            # Überprüfen, ob die Datei existiert und ob es eine PDF-Datei ist
-            if os.path.exists(orig_dateipfad) and orig_dateipfad.lower().endswith(".pdf"):
-                print(f"Drucke {orig_dateipfad} auf {self.printer}...")
-                # Subprozess zum Drucken der PDF-Datei mit Ghostscript
-                subprocess.run([self.ghostscript_path, 
-                                "-dBATCH",     # Batch-Modus, keine Benutzerinteraktion
-                                "-dNOPAUSE",   # Keine Pause zwischen den Seiten
-                                "-dQUIET",     # Keine Ausgaben in der Konsole
-                                "-sDEVICE=mswinpr2",  # Windows Drucker
-                                f"-sOutputFile=%printer%{self.printer}",  # Druckername
-                                orig_dateipfad], shell=True)
-                
-                # Fortschrittsbalken aktualisieren
-                self.progress_bar['value'] = (index + 1 / cnt_files) * 100
-                self.label_files.config(text=f"{index + 1}/{cnt_files} Dateien verarbeitet...")
-                self.label_files.update_idletasks()  # UI aktualisieren
+            elif not filepath.lower().endswith(".pdf"):
+                print('Mindestens eine Datei ist keine pdf. Bitte wiederholen Sie die Eingabe.')
+                self.filepaths_to_be_printed = []
+                self.progress_bar['Value'] = 0
+                self.label_folder.config(text=InputInformation.get_folder_drop_init())
+                self.label_folder.update_idletasks()
+                return
+            
+            elif not os.path.exists(filepath):
+                print('Mindestens ein Pfad zu einer Datei existiert nicht. Bitte wiederholen Sie die Eingabe.')
+                self.filepaths_to_be_printed = []
+                self.progress_bar['Value'] = 0
+                self.label_folder.config(text=InputInformation.get_folder_drop_init())
+                self.label_folder.update_idletasks()
+                return
 
-                time.sleep(0.5)
-            else:
-                print(f"Datei: {orig_dateipfad} nicht gefunden oder keine PDF...")
-
-        # Nachdem alle Dateien verarbeitet sind, Fortschritt auf 100% setzen
-        self.progress_bar['value'] = 100
-        self.label_files.config(text=f"Alle {cnt_files} Dateien wurden gedruckt!")
-
+        print(f'Dateien der Dateienliste eingelesen')    
 
     def plan_to_print_folder(self, folder_path, progress_bar, label_folder):
         self.progress_bar = progress_bar
         self.label_files = label_folder
         
         for file in os.listdir(folder_path):
-            if not os.path.isfile(os.path.join(folder_path, file)):
+            filepath = os.path.join(folder_path, file)
+            if os.path.isfile(filepath) and filepath.lower().endswith(".pdf") and os.path.exists(filepath):
+                filepath = os.path.join(folder_path, file)
+                self.filepaths_to_be_printed.append({"filepath": filepath, "copies": 1, "print": False})
+
+            elif not os.path.isfile(os.path.join(folder_path, file)):
                 print('Die Eingegebenen Dateien sind nicht vom Typ Dateien. Bitte Wiederholen Sie die Eingabe.')
+                # reset inputs
                 self.progress_bar['Value'] = 0
-                self.label_folder
+                self.label_folder.config(text=InputInformation.get_folder_drop_init())
+                self.label_folder.update_idletasks()
+                return
+
+            elif not filepath.lower().endswith(".pdf"):
+                print('Mindestens eine Datei ist keine pdf. Bitte wiederholen Sie die Eingabe.')
+                self.filepaths_to_be_printed = []
+                self.progress_bar['Value'] = 0
+                self.label_folder.config(text=InputInformation.get_folder_drop_init())
+                self.label_folder.update_idletasks()
                 return
             
+            elif not os.path.exists(filepath):
+                print('Mindestens ein Pfad zu einer Datei existiert nicht. Bitte wiederholen Sie die Eingabe.')
+                self.filepaths_to_be_printed = []
+                self.progress_bar['Value'] = 0
+                self.label_folder.config(text=InputInformation.get_folder_drop_init())
+                self.label_folder.update_idletasks()
+                return
 
-        files = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
-        cnt_files = len(files)
+        print(f'Dateien des Ordners eingelesen')    
 
-        for index, file in enumerate(files, 1):  # Index für Fortschritt verwenden
-            orig_dateipfad = os.path.join(folder_path, file)
-            
-            # Überprüfen, ob die Datei existiert und ob es eine PDF-Datei ist
-            if os.path.exists(orig_dateipfad) and orig_dateipfad.lower().endswith(".pdf"):
-                print(f"Drucke {orig_dateipfad} auf {self.printer}...")
-                # Subprozess zum Drucken der PDF-Datei mit Ghostscript
-                subprocess.run([self.ghostscript_path, 
-                                "-dBATCH",     # Batch-Modus, keine Benutzerinteraktion
-                                "-dNOPAUSE",   # Keine Pause zwischen den Seiten
-                                "-dQUIET",     # Keine Ausgaben in der Konsole
-                                "-sDEVICE=mswinpr2",  # Windows Drucker
-                                f"-sOutputFile=%printer%{self.printer}",  # Druckername
-                                orig_dateipfad], shell=True)
-                
-                # Fortschrittsbalken aktualisieren
-                self.progress_bar['value'] = (index / cnt_files) * 100
-                self.label_folder.config(text=f"{index}/{cnt_files} Dateien verarbeitet...")
-                self.label_folder.update_idletasks()  # UI aktualisieren
-
-                time.sleep(0.5)
-            else:
-                print(f"Datei: {orig_dateipfad} nicht gefunden oder keine PDF...")
-
-        # Nachdem alle Dateien verarbeitet sind, Fortschritt auf 100% setzen
-        self.progress_bar['value'] = 100
-        self.label_folder.config(text=f"Alle {cnt_files} Dateien wurden gedruckt!")
 
 
     def print_input(self):
-        if not self.filepahts_to_be_printed:
-            cnt_files = len(self.filepahts_to_be_printed)
-            for idx, file in enumerate(self.filepahts_to_be_printed):
-                print(f"Drucke {file["filename"]} auf {self.printer}...")
+        
+        if len(self.filepaths_to_be_printed) > 0:
+            cnt_files = len(self.filepaths_to_be_printed)
+            for idx, file in enumerate(self.filepaths_to_be_printed, 1):
+                print(f"Drucke {file['filepath']} auf {self.printer}...")
                 # Subprozess zum Drucken der PDF-Datei mit Ghostscript
                 subprocess.run([self.ghostscript_path, 
                                 "-dBATCH",     # Batch-Modus, keine Benutzerinteraktion
@@ -113,14 +106,14 @@ class PDFProcessor():
                                 "-dQUIET",     # Keine Ausgaben in der Konsole
                                 "-sDEVICE=mswinpr2",  # Windows Drucker
                                 f"-sOutputFile=%printer%{self.printer}",  # Druckername
-                                file["filename"]], shell=True)
+                                file["filepath"]], shell=True)
                 
                 # Fortschrittsbalken aktualisieren
-                self.progress_bar['value'] = (idx + 1 / cnt_files) * 100
-                self.label_files.config(text=f"{idx + 1}/{cnt_files} Dateien verarbeitet...")
+                self.progress_bar['value'] = (idx / cnt_files) * 100
+                self.label_files.config(text=f"{idx}/{cnt_files} Dateien verarbeitet...")
                 self.label_files.update_idletasks()  # UI aktualisieren
 
-                time.sleep(0.5)
+                time.sleep(0.01)
 
             self.label_files.config(text=f"Alle {cnt_files} Dateien wurden gedruckt!")
 
