@@ -6,6 +6,8 @@ from tkinter import filedialog
 from tkinterdnd2 import TkinterDnD, DND_FILES
 
 from input_information import InputInformation
+from helper_functions import helper_functions
+
 
 class PDFPrinterApp:
     def __init__(self, printer_manager, pdf_processor):
@@ -55,6 +57,8 @@ class PDFPrinterApp:
         # adding submenus to menubar
         menubar.add_cascade(label='File', menu=file_menu, underline=0)
         menubar.add_cascade(label='Settings', menu=settings_menu, underline=0)
+        menubar.add_cascade(label='Help', command=helper_functions.open_readme)
+
 
 
     def open_folder(self):
@@ -67,7 +71,7 @@ class PDFPrinterApp:
             
             self.progress_bar['value'] = 0
             self.label_folder_text.set(InputInformation.get_printing())
-            self.pdf_processor.plan_to_print_folder(self.folder_selected, self.progress_bar, self.label_folder, self.status_text)
+            self.pdf_processor.plan_to_print_folder(self.folder_selected, self.progress_bar, self.label_folder_text, self.status_text)
 
             if len(self.pdf_processor.get_filepaths_to_be_printed()) > 0:
                     self.create_print_overview()
@@ -85,7 +89,7 @@ class PDFPrinterApp:
             
             self.progress_bar['value'] = 0
             self.label_files_text.set(InputInformation.get_printing())
-            self.pdf_processor.plan_to_print_files(self.files_selected, self.progress_bar, self.label_files, self.status_text)
+            self.pdf_processor.plan_to_print_files(self.files_selected, self.progress_bar, self.label_files_text, self.status_text)
 
             if len(self.pdf_processor.get_filepaths_to_be_printed()) > 0:
                 self.create_print_overview()
@@ -105,55 +109,87 @@ class PDFPrinterApp:
 
 
     def on_print_button_click(self):
-        self.overview_window.destroy()
         self.pdf_processor.print_input(self.status_text)
+        self.label_files_text.set(InputInformation.get_files_drop_init())
+        self.label_folder_text.set(InputInformation.get_folder_drop_init())
+        self.progress_bar['value'] = 0
+        self.overview_window.destroy()
 
 
     # create the print-overwiev window
     def create_print_overview(self):
         self.overview_window = tk.Toplevel(self.root)
         self.overview_window.title("Dateiübersicht")
-        self.overview_window.geometry(InputInformation.get_overview_geometrie())
         self.overview_window.grab_set()
         self.overview_window.focus_set()
         self.overview_window.protocol("WM_DELETE_WINDOW", lambda: self.on_close('overview_window'))
+        # register validate function out of helper_function.py
+        validate_command = self.overview_window.register(helper_functions.validate_int_input)
         # set window same position as root
         self.overview_window.geometry(f"+{self.root.winfo_x()}+{self.root.winfo_y()}")
 
         if not self.pdf_processor.get_filepaths_to_be_printed():
-            messagebox.INFO(InputInformation.get_error_msg('no_files_to_print'))
+            messagebox.showinfo("Fehler", InputInformation.get_error_msg('no_files_to_print'))
             self.status_text.set(InputInformation.get_error_msg('no_files_to_print'))
             print(f'Keine Dateien zum Drucken hinzugefügt.')
             return
         else:
-            # name first row
-            table_frame = ttk.Frame(self.overview_window)
-            table_frame.grid(row=0, columnspan=3, padx=5, pady=5)
-            ttk.Label(table_frame, text="Dateiname").grid(row=0, column=0, padx=5, pady=5)
-            ttk.Label(table_frame, text="Kopien").grid(row=0, column=1, padx=5, pady=5)
-            ttk.Label(table_frame, text="Drucken").grid(row=0, column=2, padx=5, pady=5)
+            # create container (to content everything) and canvas (to scroll) in order to implement scrollbar
+            container = ttk.Frame(self.overview_window)
+            container.grid_columnconfigure(0, weight=1, minsize=800)
+            container.grid_rowconfigure(0, weight=1, minsize=400)
+            container.grid(row=0, column=0, padx=5, pady=5, sticky='nsew')
+            # scrollable canvas
+            canvas = tk.Canvas(container)
+            scrollbar_vertival = ttk.Scrollbar(container, orient="vertical", command=canvas.yview)
+            scrollbar_horizontal = ttk.Scrollbar(container, orient="horizontal", command=canvas.xview)
+            # scrollable frame
+            scrollable_frame = ttk.Frame(canvas)
+            scrollable_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+            canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+            canvas.configure(yscrollcommand=scrollbar_vertival.set, xscrollcommand=scrollbar_horizontal.set)
+            canvas.grid(row=0, column=0, sticky="nsew")
+            scrollbar_vertival.grid(row=0, column=1, sticky="ns")
+            scrollbar_horizontal.grid(row=1, column=0, sticky="ew")
+
+            # create table with header and relief
+            table_frame = ttk.Frame(scrollable_frame, borderwidth=2, relief='solid')
+            table_frame.grid(row=0, column=0, padx=5, pady=5)
+            table_frame.grid_columnconfigure(0, weight=1, minsize=350)
+            table_frame.grid_columnconfigure(1, weight=1, minsize=200)
+            table_frame.grid_columnconfigure(2, weight=1, minsize=200)
+            table_frame.grid_rowconfigure(0, weight=1, minsize=50)
+
+            header_labels = InputInformation.get_overview_HEADER()
+            for col, text in enumerate(header_labels):
+                label = ttk.Label(table_frame, text=text, anchor="center", borderwidth=2, relief="solid")
+                label.grid(row=0, column=col, sticky="nsew")
+
             # display every filename and let user choose how many copies he wants
             for idx, file in enumerate(self.pdf_processor.get_filepaths_to_be_printed(), 1):
                 # filename
-                filename_label = ttk.Label(table_frame, text=os.path.basename(file["filepath"]))
-                filename_label.grid(row=idx, column=0, padx=5, pady=5)
+                filename_label = ttk.Label(table_frame, borderwidth=2,text=os.path.basename(file["filepath"]))
+                filename_label.grid(row=idx, column=0, sticky='nsew', padx=2, pady=2)
                 # cnt of copies
-                copies_entry = ttk.Entry(table_frame)
+                copies_entry = ttk.Entry(table_frame, width=5, validate="key", validatecommand=(validate_command, "%P"))
                 copies_entry.insert(0, file["copies"])
-                copies_entry.grid(row=idx, column=1, padx=5, pady=5)
+                copies_entry.grid(row=idx, column=1, padx=2, pady=2)
                 # checkbox for oppurtunity of printing
                 print_var = tk.BooleanVar()
                 print_var.set(True)
-                print_checkbox = ttk.Checkbutton(table_frame, text="Drucken", variable=print_var)
-                print_checkbox.grid(row=idx, column=2, padx=5,)
+                print_checkbox = ttk.Checkbutton(table_frame, text="Drucken", variable=print_var, style="")
+                print_checkbox.grid(row=idx, column=2, padx=2, pady=2)
                 # safe references
                 file["copies_entry"] = copies_entry
                 file["print_val"] = print_var
 
-            print_frame = ttk.Frame(self.overview_window)
-            print_frame.grid(row=1, column=3, padx=5, pady=5)
-            print_button = ttk.Button(print_frame, text='Drucken', command=self.on_print_button_click)
-            print_button.pack(pady=10)
+            footer_frame = ttk.Frame(self.overview_window, relief="solid", borderwidth=1)
+            footer_frame.grid(row=1, column=0, columnspan=3, pady=0, sticky='nsew')
+            footer_frame.grid_columnconfigure(0, weight=1) 
+            footer_frame.grid_rowconfigure(0, weight=1)
+
+            print_button = ttk.Button(footer_frame, text='Drucken', command=self.on_print_button_click)
+            print_button.grid(padx=10, pady=10, sticky="nsew")
 
 
     # drag and drop of folder
@@ -161,7 +197,7 @@ class PDFPrinterApp:
         ordnerpfad = event.data.strip('{}')  # Der Ordnerpfad, der vom Benutzer gezogen wurde
         # check data_format
         if not os.path.isdir(ordnerpfad):
-            messagebox.INFO(InputInformation.get_error_msg('no_folder_dropped'))
+            messagebox.showinfo("Fehler", InputInformation.get_error_msg('no_folder_dropped'))
             self.status_text.set(InputInformation.get_error_msg('no_folder_dropped'))
             print("Sie haben keinen Ordner abgelegt. Bitte wiederholen")
             return
@@ -171,7 +207,7 @@ class PDFPrinterApp:
         # Fortschrittsbalken auf 0 setzen
         self.progress_bar['value'] = 0
         self.label_folder_text.set(InputInformation.get_printing())
-        self.pdf_processor.plan_to_print_folder(ordnerpfad, self.progress_bar, self.label_folder, self.status_text)
+        self.pdf_processor.plan_to_print_folder(ordnerpfad, self.progress_bar, self.label_folder_text, self.status_text)
 
         if len(self.pdf_processor.get_filepaths_to_be_printed()) > 0:
                 self.create_print_overview()
@@ -193,7 +229,7 @@ class PDFPrinterApp:
             # Fortschrittsbalken auf 0 setzen und die Datei drucken
             self.progress_bar['value'] = 0
             self.label_files_text.set(InputInformation.get_printing())
-            self.pdf_processor.plan_to_print_files(files_list, self.progress_bar, self.label_files, self.status_text)
+            self.pdf_processor.plan_to_print_files(files_list, self.progress_bar, self.label_files_text, self.status_text)
             
             if len(self.pdf_processor.get_filepaths_to_be_printed()) > 0:
                 self.create_print_overview()

@@ -4,9 +4,10 @@ class InputInformation:
     PRINTING = "Druckvorgang läuft ..."
 
     ROOT_TITLE = "Drucken von PDF in Eingabeform von Dateien oder Ordner"
-    ROOT_GEOMETRIE = "800x400"
+    ROOT_GEOMETRIE = "1000x500"
 
-    OVERVIEW_GEOMETRIE = "800x400"
+    OVERVIEW_GEOMETRIE = "1200x600"
+    OV_HEADER_LABELS = ["Dateiname", "Anzahl an Kopien", "Drucken"]
 
     # status-row-text
     STATUS = {
@@ -25,6 +26,8 @@ class InputInformation:
         'none_existing_path': "Mindestens ein Pfad zu einer Datei existiert nicht. Bitte wiederholen Sie die Eingabe.",
         'folder_consist_of_not_only_files': "Mindestens eine Datei des Ordners ist nicht vom Typ Datei. Bitte Wiederholen Sie die Eingabe."
     }   
+
+    
 
     @staticmethod
     def get_folder_drop_init():
@@ -49,6 +52,10 @@ class InputInformation:
     @staticmethod
     def get_overview_geometrie():
         return InputInformation.OVERVIEW_GEOMETRIE
+
+    @staticmethod
+    def get_overview_HEADER():
+        return InputInformation.OV_HEADER_LABELS
     
     @staticmethod
     def get_status_text(key):
