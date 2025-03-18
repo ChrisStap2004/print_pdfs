@@ -57,7 +57,7 @@ class PDFPrinterApp:
         # adding submenus to menubar
         menubar.add_cascade(label='File', menu=file_menu, underline=0)
         menubar.add_cascade(label='Settings', menu=settings_menu, underline=0)
-        menubar.add_cascade(label='Help', command=helper_functions.open_readme)
+        menubar.add_cascade(label='Help', command= lambda: helper_functions.open_readme(self, self.root))
 
 
 

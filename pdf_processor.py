@@ -15,8 +15,7 @@ class PDFProcessor():
         self.filepaths_to_be_printed = []
 
         # initialize scripts
-        self.acrobat_path = r"C:\Program Files\Adobe\Acrobat DC\Acrobat\Acrobat.exe" 
-        self.ghostscript_path = r"C:\Program Files\gs\gs10.04.0\bin\gswin64c.exe"
+        self.ghostscript_path = InputInformation.get_ghostscript_path()
         self.printer = self.printer_manager.get_selected_printer()
 
         self.label_files_text = None
@@ -140,6 +139,7 @@ class PDFProcessor():
 
             status_text.set(f"{cnt_printed} von {cnt_files} Dateien gedruckt")
             print(f"{cnt_printed} von {cnt_files} Dateien gedruckt")
+            self.filepaths_to_be_printed = []
 
         else:
             status_text.set(InputInformation.get_status_text('init'))

@@ -1,4 +1,5 @@
 class InputInformation:
+
     FOLDER_DROP_INIT = "Ziehen Sie einen Ordner hierher, um die PDFs zu drucken."
     FILES_DROP_INIT = "Ziehen Sie versch. Dateien hierher, um die PDFs zu drucken."
     PRINTING = "Druckvorgang läuft ..."
@@ -27,7 +28,10 @@ class InputInformation:
         'folder_consist_of_not_only_files': "Mindestens eine Datei des Ordners ist nicht vom Typ Datei. Bitte Wiederholen Sie die Eingabe."
     }   
 
-    
+    @staticmethod
+    def get_ghostscript_path():
+        return r"C:\Program Files\gs\gs10.04.0\bin\gswin64c.exe"
+
 
     @staticmethod
     def get_folder_drop_init():
