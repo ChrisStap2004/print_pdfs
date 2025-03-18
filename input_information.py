@@ -1,3 +1,7 @@
+import sys
+import os
+
+
 class InputInformation:
 
     FOLDER_DROP_INIT = "Ziehen Sie einen Ordner hierher, um die PDFs zu drucken."
